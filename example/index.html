@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <style>
+        .container {
+            border: 1px solid #ccc;
+            background-color: aquamarine;
+        }
+
+        .dependency1 {
+            float: left;
+            width: 25%;
+            border: 1px solid #f2f2f2;
+            background-color: lightcoral;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="dependency1">Dependency #1</div>
+        <div class="dependency1">Dependency #2</div>
+        <div class="dependency1">Dependency #3</div>
+        <div class="dependency1">Dependency #4</div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.0.0.min.js" integrity="sha256-JmvOoLtYsmqlsWxa7mDSLMwa6dZ9rrIdtrrVYRnDRH0=" crossorigin="anonymous"></script>
+    <script src="../src/jquery.eventRegistration.js"></script>
+    <script>
+
+        var resizeDebounceTimer;
+        var heightChange = function($elem) {
+            console.log('height changed');
+
+            var min = 100;
+            var max = 500;
+            var height = parseInt(Math.random() * (max - min) + min);
+
+            $elem.css('height', height).trigger('changed.height');
+        };
+
+        var recalculateWrapper = function($elem) {
+            console.log('recalculated wrapper');
+
+            var maxHeight = 0;
+
+            $elem.children().each(function() {
+                var height = $(this).height();
+                if(height > maxHeight) {
+                    maxHeight = height;
+                }
+            });
+            $elem.css('height', maxHeight);
+        };
+
+        $(document).ready(function(){
+
+            // register events
+            $('.container').eventRegistration({
+                dependencies: '.dependency1', // selector used by this.$element.find(...) or function that returns jQuery collection
+                listen: 'changed.height', // listen to event(s) on depending elements
+                trigger: 'recalculate' // string triggers event on its own context or apply function() {}
+            });
+
+            // init plugins
+            $('.dependency1').on('change.height', function() {
+                heightChange($(this));
+            });
+
+            $('.container').on('recalculate', function() {
+                recalculateWrapper($(this));
+            });
+
+            $(window).on('resize', function() {
+                clearTimeout(resizeDebounceTimer);
+                resizeDebounceTimer = setTimeout(function() {
+                    $('.dependency1').trigger('change.height');
+                }, 300);
+            });
+
+            // initial calculation
+            $('.dependency1').trigger('change.height');
+
+        });
+    </script>
+
+</body>
+</html>
